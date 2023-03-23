@@ -54,7 +54,11 @@ def fetch_users_of_group(group_name):
     """
     logger.info("Fetching users of ldap group %s " % group_name)
     result = []
-    connection.bind()
+    try:
+        connection.bind()
+    except LDAPSocketReceiveError:
+        logger.warning("LDAPSocketReceiveError: error receiving data exception. Reopening connection.")
+        connection.bind()
     if configuration.LDAP_GROUP_SEARCH_FILTER:
         group_query_filter = "(&(cn=" + group_name + ")" + configuration.LDAP_GROUP_SEARCH_FILTER + ")"
     else:
