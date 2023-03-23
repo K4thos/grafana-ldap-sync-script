@@ -5,13 +5,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("grafana-ldap-sync-script")
 
 class config:
-
-    def __init__(self):
-        self.load_config("")
-
-    def __init__(self, config_path):
-        self.load_config(config_path)
-
     GRAFANA_AUTH = ""
     GRAFANA_URL = ""
     GRAFANA_PROTOCOL = "http"
@@ -33,14 +26,21 @@ class config:
     LDAP_USER_SEARCH_FILTER = ""
     DRY_RUN = False
 
+    def __init__(self, config_path):
+        self.load_config(config_path)
+
     def load_config(self, config_path):
         """
-        Loads the config_mock.yml file present in the directory and fills all global variables with the defined config.
+        Loads the config file present at the given path and fills all class variables with the defined config.
         """
         try:
-            config = yaml.safe_load(open(config_path))["config"]
+            with open(config_path) as f:
+                config = yaml.safe_load(f)["config"]
         except FileNotFoundError as e:
-            logger.error("Config-file %s does not exist!", config_path)
+            logger.error("Config file %s does not exist!", config_path)
+            raise e
+        except Exception as e:
+            logger.error("Error reading config file %s: %s", config_path, str(e))
             raise e
         self.GRAFANA_AUTH = (
             config["grafana"]["user"],
@@ -57,7 +57,6 @@ class config:
         self.LDAP_GROUP_SEARCH_BASE = config["ldap"]["groupSearchBase"]
         self.LDAP_GROUP_SEARCH_FILTER = config["ldap"]["groupSearchFilter"]
         self.LDAP_MEMBER_ATTRIBUTE = config["ldap"]["memberAttributeName"]
-        self.LDAP_USER_LOGIN_ATTRIBUTE = config["ldap"]["userLoginAttribute"]
         self.LDAP_IS_NTLM = config["ldap"]["useNTLM"]
         self.LDAP_USE_SSL = config["ldap"]["useSSL"]
         self.LDAP_USER_LOGIN_ATTRIBUTE = config["ldap"]["userLoginAttribute"]

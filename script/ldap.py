@@ -1,5 +1,6 @@
 from ldap3 import Server, Connection, ALL, SUBTREE, NTLM
 import logging
+from cachetools import cached, TTLCache
 
 from .config import config
 from .helpers import *
@@ -7,10 +8,9 @@ from .helpers import *
 logger = logging.getLogger()
 
 configuration = ""
-user_cache = {}
-
 connection = ""
 
+user_cache = TTLCache(maxsize=1000, ttl=600)  # TTLCache with a max size of 1000 entries and 10 minutes time-to-live.
 
 def setup_ldap(config_dict):
     global configuration, connection
@@ -44,6 +44,7 @@ def get_ntlm_connection():
                       password=configuration.LDAP_PASSWORD, authentication=NTLM, read_only=True)
 
 
+@cached(user_cache)
 def fetch_users_of_group(group_name):
     """
     Searches all users of a specified group in the provided ldap-server. Returns the user objects as an array of
@@ -105,6 +106,4 @@ def get_users_of_group(group):
     :return: A list containing dictionaries. Each dictionary consists of a login attribute and the respective user
     login.
     """
-    if group not in user_cache:
-        user_cache[group] = fetch_users_of_group(group)
-    return user_cache[group]
+    return fetch_users_of_group(group)

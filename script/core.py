@@ -29,7 +29,8 @@ def read_csv(file):
             reader = csv.reader(f)
             data = list(reader)
     except FileNotFoundError as e:
-        logger.error("Binding-file %s does not exist!", configuration.LDAP_BINDING_FILE)
+        logging.error("Binding-file %s does not exist!", file)
+        raise e
     return data
 
 
